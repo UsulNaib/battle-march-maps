@@ -113,7 +113,7 @@ function resultHtml(r: MapResult): string {
       <div class="toolbar">
         <div class="chips" role="group" aria-label="${esc(t("layers"))}">${(["grid", "zones", "dist", "gaps", "centre", "names"] as const).map((k) =>
           `<label class="chip"><input type="checkbox" data-layer="${k}" ${layers[k] ? "checked" : ""}>${t("l" + k[0].toUpperCase() + k.slice(1))}</label>`).join("")}</div>
-        <div class="btns"><button type="button" id="reroll">${t("newSeed")}</button><button type="button" id="dlsvg">${t("exportSvg")}</button><button type="button" id="dlpng">${t("exportPng")}</button><button type="button" id="print">${t("print")}</button><button type="button" id="link">${t("copyLink")}</button></div>
+        <div class="btns"><button type="button" id="reroll">${t("newSeed")}</button><button type="button" id="copyimg" class="primary">${t("copyImage")}</button><button type="button" id="dlsvg">${t("exportSvg")}</button><button type="button" id="dlpng">${t("exportPng")}</button><button type="button" id="print">${t("print")}</button><button type="button" id="link">${t("copyLink")}</button></div>
       </div>
     </section>
     <section class="card"><h2>${t("placement")}</h2><p class="small">${t("howTo", { w: W, h: H })}</p>
@@ -162,6 +162,23 @@ function toast(msg: string) {
   const d = document.createElement("div"); d.className = "toast"; d.textContent = msg; d.setAttribute("role", "status");
   document.body.appendChild(d); setTimeout(() => d.remove(), 1800);
 }
+/** The current map as a PNG (40 px per inch). */
+function pngBlob(): Promise<Blob> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const url = URL.createObjectURL(new Blob([renderSvg(result, layers)], { type: "image/svg+xml" }));
+    img.onload = () => {
+      const pxPerInch = 40, M = 2.4;
+      const c = document.createElement("canvas");
+      c.width = (result.board.w + 2 * M) * pxPerInch; c.height = (result.board.h + 2 * M) * pxPerInch;
+      c.getContext("2d")!.drawImage(img, 0, 0, c.width, c.height);
+      URL.revokeObjectURL(url);
+      c.toBlob((b) => (b ? resolve(b) : reject(new Error("png"))), "image/png");
+    };
+    img.onerror = () => reject(new Error("svg"));
+    img.src = url;
+  });
+}
 const fileBase = () => `battle-march-${result.map.id}-${result.settings.seed}`;
 
 app.addEventListener("change", (e) => {
@@ -184,19 +201,16 @@ app.addEventListener("click", async (e) => {
   if (!id) return;
   if (id === "newseed" || id === "reroll") { settings = readForm(); run(true); }
   if (id === "dlsvg") download(fileBase() + ".svg", new Blob([renderSvg(result, layers)], { type: "image/svg+xml" }));
-  if (id === "dlpng") {
-    const svg = renderSvg(result, layers);
-    const img = new Image();
-    const url = URL.createObjectURL(new Blob([svg], { type: "image/svg+xml" }));
-    img.onload = () => {
-      const pxPerInch = 40, M = 2.4;
-      const c = document.createElement("canvas");
-      c.width = (result.board.w + 2 * M) * pxPerInch; c.height = (result.board.h + 2 * M) * pxPerInch;
-      c.getContext("2d")!.drawImage(img, 0, 0, c.width, c.height);
-      URL.revokeObjectURL(url);
-      c.toBlob((b) => b && download(fileBase() + ".png", b), "image/png");
-    };
-    img.src = url;
+  if (id === "dlpng") pngBlob().then((b) => download(fileBase() + ".png", b)).catch(() => toast(t("copyFailed")));
+  if (id === "copyimg") {
+    try {
+      if (!("ClipboardItem" in window) || !navigator.clipboard?.write) throw new Error("unsupported");
+      // Pass the promise straight to ClipboardItem so Safari keeps the click as the user gesture.
+      await navigator.clipboard.write([new ClipboardItem({ "image/png": pngBlob() })]);
+      toast(t("imgCopied"));
+    } catch {
+      toast(t("copyFailed"));
+    }
   }
   if (id === "print") window.print();
   if (id === "link") {

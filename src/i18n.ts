@@ -12,7 +12,7 @@ const EN = {
   lCentre: "Distance to centre", lZones: "Zones", lNames: "Names",
   checks: "Rule checks", placement: "How to place it", scoring: "Why this map",
   allOk: "All {n} checks passed", someBad: "{n} checks failed",
-  exportSvg: "Download SVG", exportPng: "Download PNG", print: "Print", copyLink: "Copy link", copied: "Link copied",
+  exportSvg: "Download SVG", exportPng: "Download PNG", print: "Print", copyLink: "Copy link", copied: "Link copied", copyImage: "Copy map image", imgCopied: "Map copied – paste it anywhere", copyFailed: "This browser can't copy images – use Download PNG",
   sideA: "Side A", sideB: "Side B", centreRing: "no terrain within 12″ of the centre",
   rolled: "rolled {r}", mirroredNote: "mirrored", derived: "36×48″ geometry extrapolated from the 30×44″ map",
   trovesNote: "Treasure trove positions are provisional: the official trove maps (General's Companion p. 24) are not entered yet. They are placed in no-man's land, point-symmetric, at least 3″ from terrain.",
