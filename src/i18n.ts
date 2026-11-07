@@ -1,4 +1,3 @@
-export type Lang = "en" | "de";
 
 const EN = {
   title: "Battle March Map Generator",
@@ -18,7 +17,7 @@ const EN = {
   rolled: "rolled {r}", mirroredNote: "mirrored", derived: "36×48″ geometry extrapolated from the 30×44″ map",
   trovesNote: "Treasure trove positions are provisional: the official trove maps (General's Companion p. 24) are not entered yet. They are placed in no-man's land, point-symmetric, at least 3″ from terrain.",
   colPiece: "Piece", colCentre: "Centre of the piece", colTurn: "Turned", colSize: "Size", fromEdge: "{v}″ from the {edge} edge",
-  left: "left", right: "right", top: "top", bottom: "bottom", clockwise: "clockwise", ccw: "anticlockwise", notTurned: "not turned", lang: "Deutsch",
+  left: "left", right: "right", top: "top", bottom: "bottom", clockwise: "clockwise", ccw: "anticlockwise", notTurned: "not turned",
   objHere: "{v}″ from the {edge} edge", colObj: "Objective", newSeed: "New seed", settingsH: "Settings", howTo: "Long edge = 0–{w}″ from left to right, short edge = 0–{h}″ from top to bottom. Turn angles are measured from the long edge.",
   score: "Score {s} / 100 – best of {v} legal maps",
   sc_fair: "Both sides have similar terrain within 12″ of their zone", sc_zones: "Deployment zones stay open and equally covered",
@@ -35,48 +34,7 @@ const EN = {
   o_trove: "Treasure trove", o_landmark: "Landmark",
   footer: "Unofficial fan tool. Rule numbers from Warhammer: The Old World, the Matched Play Guide and Battle March: General's Companion.",
 };
-type Dict = typeof EN;
-const DE: Dict = {
-  title: "Battle-March-Kartengenerator",
-  tagline: "Zufällige, regelgeprüfte Schlachtfelder für Warhammer: The Old World – Battle March",
-  generate: "Neue Karte", reroll: "Gleiche Einstellungen, neuer Seed", seed: "Seed",
-  board: "Schlachtfeld", map: "Aufstellungskarte", random: "Zufällig", mirror: "Gespiegelt", yes: "Ja", no: "Nein",
-  objectives: "Missionsziele", roll: "W6 würfeln", none: "Keine", troves2: "Zwei Schatzhorte", troves3: "Drei Schatzhorte", landmark: "Strategisches Wahrzeichen",
-  size: "Geländegröße", sizeRandom: "Zufällig 8×8 / 8×6", rotation: "Drehung", free: "Beliebiger Winkel", square: "Nur 0° / 90°",
-  spacing: "Abstandsregel", mpg: "Matched Play Guide (3″ zwischen allen Stücken)", rulebook: "Regelbuch (12″ zu Stücken des Gegners)",
-  count: "Geländestücke", countAuto: "Regelwert", obstacles: "davon Hindernisse (1×8″)", kinds: "Geländearten",
-  candidates: "Verglichene Karten", layers: "Anzeigen", lGrid: "1″-Raster", lDist: "Abstände zu den Kanten", lGaps: "Abstände zwischen Stücken",
-  lCentre: "Abstand zur Mitte", lZones: "Zonen", lNames: "Namen",
-  checks: "Regelprüfung", placement: "So stellst du es auf", scoring: "Warum diese Karte",
-  allOk: "Alle {n} Prüfungen bestanden", someBad: "{n} Prüfungen nicht bestanden",
-  exportSvg: "SVG herunterladen", exportPng: "PNG herunterladen", print: "Drucken", copyLink: "Link kopieren", copied: "Link kopiert",
-  sideA: "Seite A", sideB: "Seite B", centreRing: "kein Gelände innerhalb 12″ um die Mitte",
-  rolled: "gewürfelt: {r}", mirroredNote: "gespiegelt", derived: "36×48″-Maße aus der 30×44″-Karte abgeleitet",
-  trovesNote: "Die Positionen der Schatzhorte sind vorläufig: Die offiziellen Schatzhort-Karten (General's Companion S. 24) sind noch nicht eingetragen. Sie liegen punktsymmetrisch im Niemandsland, mindestens 3″ vom Gelände.",
-  colPiece: "Stück", colCentre: "Mitte des Stücks", colTurn: "Gedreht", colSize: "Größe", fromEdge: "{v}″ von der {edge} Kante",
-  left: "linken", right: "rechten", top: "oberen", bottom: "unteren", clockwise: "im Uhrzeigersinn", ccw: "gegen den Uhrzeigersinn", notTurned: "nicht gedreht", lang: "English",
-  objHere: "{v}″ von der {edge} Kante", colObj: "Missionsziel", newSeed: "Neuer Seed", settingsH: "Einstellungen", howTo: "Lange Kante = 0–{w}″ von links nach rechts, kurze Kante = 0–{h}″ von oben nach unten. Drehwinkel werden zur langen Kante gemessen.",
-  score: "Wertung {s} / 100 – die beste von {v} regelkonformen Karten",
-  sc_fair: "Beide Seiten haben ähnlich viel Gelände bis 12″ vor ihrer Zone", sc_zones: "Aufstellungszonen bleiben frei und gleich bedeckt",
-  sc_lanes: "Manche Schussbahnen sind frei, manche blockiert", sc_spread: "Gelände über den Tisch verteilt", sc_gaps: "Keine Lücken unter 2″, durch die keine Einheit passt",
-  sc_variety: "Unterschiedliche Geländearten",
-  ck_count: "Geländestücke: {n} (Regel: {expected}, eines pro 12″ der längsten Kante)",
-  ck_onBoard: "#{n} liegt ganz auf dem Schlachtfeld", ck_size: "#{n}: breiteste Stelle {v}″ (erlaubt {lo}–{hi}″)",
-  ck_centre: "#{n}: {v}″ von der Mitte (mindestens {min}″)", ck_spacingMpg: "#{a} ↔ #{b}: {v}″ Abstand (mindestens {min}″)",
-  ck_spacingOpp: "#{a} ↔ #{b}, von verschiedenen Spielern: {v}″ (mindestens {min}″)", ck_overlap: "#{a} ↔ #{b}, gleicher Spieler: {v}″, keine Überlappung",
-  ck_trove: "Schatzhort {n}: {v}″ zum nächsten Gelände (mindestens {min}″)", ck_landmark: "Wahrzeichen: {v}″ zum nächsten Gelände (mindestens {min}″)",
-  ck_noLayout: "Keine regelkonforme Aufstellung für {n} Stücke gefunden. Weniger Stücke, kleinere Stücke oder den Matched-Play-Abstand versuchen.",
-  m_pitched: "Pitched Battle", m_close: "Close Encounter", m_opposed: "Opposed Flanks", m_meeting: "Meeting Engagement", m_pass: "Mountain Pass", m_outflank: "Outflank",
-  k_hill: "Hügel", k_wood: "Wald", k_building: "Gebäude", k_ruins: "Ruinen", k_marsh: "Sumpf", k_rocky: "Felsiger Boden", k_wall: "Mauer", k_hedge: "Hecke", k_fence: "Zaun",
-  o_trove: "Schatzhort", o_landmark: "Wahrzeichen",
-  footer: "Inoffizielles Fan-Werkzeug. Regelwerte aus Warhammer: The Old World, dem Matched Play Guide und Battle March: General's Companion.",
-};
-
-let lang: Lang = "en";
-export const setLang = (l: Lang) => { lang = l; };
-export const getLang = () => lang;
 export function t(key: string, params: Record<string, string | number> = {}): string {
-  const d = (lang === "de" ? DE : EN) as Record<string, string>;
-  const s = d[key] ?? (EN as Record<string, string>)[key] ?? key;
+  const s = (EN as Record<string, string>)[key] ?? key;
   return s.replace(/\{(\w+)\}/g, (_, k) => String(params[k] ?? ""));
 }

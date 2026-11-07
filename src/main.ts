@@ -2,7 +2,7 @@ import { generate, DEFAULT_SETTINGS, Settings, MapResult } from "./generate";
 import { renderSvg, Layers } from "./render";
 import { BOARDS, DEPLOY_MAPS, AREA_KINDS, OBSTACLE_KINDS, Kind, defaultFeatureCount } from "./rules";
 import { centroid } from "./geom";
-import { t, setLang, getLang, Lang } from "./i18n";
+import { t } from "./i18n";
 import { randomSeed } from "./rng";
 
 const app = document.getElementById("app")!;
@@ -17,8 +17,6 @@ try { layers = { ...layers, ...JSON.parse(localStorage.getItem("bmm.layers") || 
 function readHash(): Settings {
   const q = new URLSearchParams(location.hash.slice(1));
   const s: Settings = { ...DEFAULT_SETTINGS };
-  if (q.get("lang") === "de" || q.get("lang") === "en") setLang(q.get("lang") as Lang);
-  else if (!q.toString() && navigator.language.startsWith("de")) setLang("de");
   s.seed = q.get("s") || randomSeed();
   s.board = q.get("b") || s.board;
   s.map = q.get("m") || s.map;
@@ -36,7 +34,7 @@ function readHash(): Settings {
 function writeHash(s: Settings) {
   const q = new URLSearchParams({
     s: s.seed, b: s.board, m: s.map, mi: s.mirror, o: s.objectives, sz: s.size, r: s.rotation, sp: s.spacing,
-    n: String(s.count), ob: String(s.obstacles), k: s.kinds.join(","), c: String(s.candidates), lang: getLang(),
+    n: String(s.count), ob: String(s.obstacles), k: s.kinds.join(","), c: String(s.candidates)
   });
   history.replaceState(null, "", "#" + q.toString());
 }
@@ -122,10 +120,8 @@ function resultHtml(r: MapResult): string {
 }
 
 function render() {
-  document.documentElement.lang = getLang();
   app.innerHTML = `<div class="wrap">
-    <header><div><h1>${t("title")}</h1><p class="tagline">${t("tagline")}</p></div>
-      <div class="btns"><button type="button" id="lang">${t("lang")}</button></div></header>
+    <header><div><h1>${t("title")}</h1><p class="tagline">${t("tagline")}</p></div></header>
     <div class="layout">${controlsHtml(settings)}<div class="main" id="main">${resultHtml(result)}</div></div>
     <footer>${t("footer")}</footer></div>`;
 }
@@ -174,7 +170,6 @@ app.addEventListener("click", async (e) => {
   const id = (e.target as HTMLElement).closest("button")?.id;
   if (!id) return;
   if (id === "newseed" || id === "reroll") { settings = readForm(); run(true); }
-  if (id === "lang") { setLang(getLang() === "de" ? "en" : "de"); writeHash(settings); render(); }
   if (id === "dlsvg") download(fileBase() + ".svg", new Blob([renderSvg(result, layers)], { type: "image/svg+xml" }));
   if (id === "dlpng") {
     const svg = renderSvg(result, layers);
