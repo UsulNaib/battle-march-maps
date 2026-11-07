@@ -1,5 +1,5 @@
 import { generate, DEFAULT_SETTINGS, Settings, MapResult } from "./generate";
-import { renderSvg, Layers } from "./render";
+import { renderSvg, svgSize, Layers } from "./render";
 import { BOARDS, DEPLOY_MAPS, AREA_KINDS, OBSTACLE_KINDS, Kind, SizeMode, defaultFeatureCount } from "./rules";
 import { centroid } from "./geom";
 import { t } from "./i18n";
@@ -168,9 +168,9 @@ function pngBlob(): Promise<Blob> {
     const img = new Image();
     const url = URL.createObjectURL(new Blob([renderSvg(result, layers)], { type: "image/svg+xml" }));
     img.onload = () => {
-      const pxPerInch = 40, M = 2.4;
+      const pxPerInch = 40, size = svgSize(result);
       const c = document.createElement("canvas");
-      c.width = (result.board.w + 2 * M) * pxPerInch; c.height = (result.board.h + 2 * M) * pxPerInch;
+      c.width = Math.round(size.w * pxPerInch); c.height = Math.round(size.h * pxPerInch);
       c.getContext("2d")!.drawImage(img, 0, 0, c.width, c.height);
       URL.revokeObjectURL(url);
       c.toBlob((b) => (b ? resolve(b) : reject(new Error("png"))), "image/png");

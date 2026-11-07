@@ -74,12 +74,16 @@ const DEFS = `<defs>
 <pattern id="pRocky" width="1.6" height="1.6" patternUnits="userSpaceOnUse"><path d="M.3 .9l.3-.4.4.1.2.4-.4.2z" fill="#7d7364"/></pattern>
 </defs>`;
 
+export const MARGIN = 2.4, LEGEND = 1.6;
+/** Size of the drawing in inches (table plus rulers and legend). */
+export const svgSize = (r: MapResult) => ({ w: r.board.w + 2 * MARGIN, h: r.board.h + 2 * MARGIN + LEGEND });
+
 export function renderSvg(r: MapResult, L: Layers): string {
   const { board: b } = r;
-  const W = b.w, H = b.h, M = 2.4;
-  let s = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${-M} ${-M} ${W + 2 * M} ${H + 2 * M}" font-family="Georgia, 'Times New Roman', serif" role="img" aria-label="${esc(t("m_" + r.map.id))}, ${W}×${H}″">`;
+  const W = b.w, H = b.h, M = MARGIN, LB = LEGEND;
+  let s = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${-M} ${-M} ${W + 2 * M} ${H + 2 * M + LB}" font-family="Georgia, 'Times New Roman', serif" role="img" aria-label="${esc(t("m_" + r.map.id))}, ${W}×${H}″">`;
   s += `<style>.halo{paint-order:stroke;stroke:${C.table};stroke-width:.28px;stroke-linejoin:round}</style>${DEFS}`;
-  s += `<rect x="${-M}" y="${-M}" width="${W + 2 * M}" height="${H + 2 * M}" fill="#f6f0e1"/>`;
+  s += `<rect x="${-M}" y="${-M}" width="${W + 2 * M}" height="${H + 2 * M + LB}" fill="#f6f0e1"/>`;
   s += `<rect x="0" y="0" width="${W}" height="${H}" fill="${C.table}"/>`;
   if (L.grid) {
     for (let x = 1; x < W; x++) s += `<line x1="${x}" y1="0" x2="${x}" y2="${H}" stroke="${x % 6 ? C.grid : C.grid6}" stroke-width="${x % 6 ? 0.03 : 0.06}"/>`;
@@ -105,10 +109,6 @@ export function renderSvg(r: MapResult, L: Layers): string {
       s += label(c.x, c.y, t(z.side === "A" ? "sideA" : "sideB"), 1.3, col);
     }
     s += `<circle cx="${W / 2}" cy="${H / 2}" r="${RULES.centreExclusion}" fill="none" stroke="${C.centre}" stroke-width="0.09" stroke-dasharray="0.35 0.3"/>`;
-    // label runs along the inside of the 12" ring, on its lower left
-    const R = RULES.centreExclusion - 0.75;
-    s += `<path id="ring" d="M${W / 2 - R} ${H / 2} A${R} ${R} 0 0 0 ${W / 2 + R} ${H / 2}" fill="none"/>`;
-    s += `<text font-size="0.7" fill="${C.centre}" class="halo"><textPath href="#ring" startOffset="22%">${esc(t("centreRing"))}</textPath></text>`;
     s += `<path d="M${W / 2 - 0.5} ${H / 2}h1M${W / 2} ${H / 2 - 0.5}v1" stroke="${C.centre}" stroke-width="0.08"/>`;
   }
   // objectives (keep-out ring first)
@@ -152,5 +152,17 @@ export function renderSvg(r: MapResult, L: Layers): string {
     if (L.names) s += label(c.x, c.y + 1.45, t("k_" + f.kind), 0.8, C.ink);
   }
   s += `<rect x="0" y="0" width="${W}" height="${H}" fill="none" stroke="${C.edge}" stroke-width="0.14"/>`;
+  // legend below the table, in straight, readable text
+  const ly = H + M + 0.9;
+  const items: string[] = [];
+  let x = 0;
+  const add = (sym: string, text: string) => {
+    items.push(`<g transform="translate(${x} ${ly})">${sym}<text x="1.6" y="0" font-size="0.85" fill="${C.ink}" dominant-baseline="middle">${esc(text)}</text></g>`);
+    x += 2.4 + text.length * 0.43;
+  };
+  if (L.zones) add(`<circle cx="0.6" cy="0" r="0.55" fill="none" stroke="${C.centre}" stroke-width="0.09" stroke-dasharray="0.3 0.2"/>`, t("centreRing"));
+  if (r.objectives.length) add(`<circle cx="0.6" cy="0" r="0.55" fill="${C.obj}" fill-opacity="0.12" stroke="${C.obj}" stroke-width="0.07" stroke-dasharray="0.25 0.2"/>`, t("objRing"));
+  if (L.dist || L.gaps) add(`<line x1="0" y1="0" x2="1.2" y2="0" stroke="${C.dim}" stroke-width="0.08" marker-start="url(#arr)" marker-end="url(#arr)"/>`, t("distLegend"));
+  s += items.join("");
   return s + "</svg>";
 }
