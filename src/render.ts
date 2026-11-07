@@ -118,7 +118,14 @@ export function renderSvg(r: MapResult, L: Layers): string {
   }
   for (const f of r.features) s += featureArt(f);
   r.objectives.forEach((o, i) => {
-    if (o.kind === "landmark") s += `<circle cx="${o.x}" cy="${o.y}" r="${o.r}" fill="#6b5a3a" stroke="${C.ink}" stroke-width="0.12"/><path d="M${o.x} ${o.y - 1.2}l.9 1.8h-1.8z" fill="#e9dfc6"/>`;
+    if (o.kind === "landmark") {
+      // the base itself, with a dimension line showing its 100 mm diameter
+      s += `<circle cx="${o.x}" cy="${o.y}" r="${o.r}" fill="#6b5a3a" stroke="${C.ink}" stroke-width="0.12"/><path d="M${o.x} ${o.y - 1.1}l.85 1.6h-1.7z" fill="#e9dfc6"/>`;
+      const dy = o.y - o.r - 0.75;
+      s += `<path d="M${o.x - o.r} ${o.y}V${dy - 0.3}M${o.x + o.r} ${o.y}V${dy - 0.3}" stroke="${C.dim}" stroke-width="0.04" stroke-dasharray="0.15 0.12"/>`;
+      s += `<line x1="${o.x - o.r}" y1="${dy}" x2="${o.x + o.r}" y2="${dy}" stroke="${C.dim}" stroke-width="0.07" marker-start="url(#arr)" marker-end="url(#arr)"/>`;
+      s += label(o.x, dy - 0.6, `Ø 100 mm (${f1(o.r * 2)}″)`, 0.72, C.dim);
+    }
     else s += `<circle cx="${o.x}" cy="${o.y}" r="${o.r}" fill="${C.obj}" stroke="${C.ink}" stroke-width="0.1"/>` + label(o.x, o.y + 0.05, String(i + 1), 0.8, C.ink, "middle", false);
   });
   // distance markers
@@ -143,7 +150,7 @@ export function renderSvg(r: MapResult, L: Layers): string {
   }
   // objective names
   if (L.names) r.objectives.forEach((o, i) => {
-    const name = o.kind === "landmark" ? t("o_landmark") : `${t("o_trove")} ${i + 1}`;
+    const name = o.kind === "landmark" ? `${t("o_landmark")} · ${t("impassable")}` : `${t("o_trove")} ${i + 1} · Ø 40 mm`;
     s += label(o.x, o.y + o.r + 0.85, name, 0.75, "#6e4f08");
   });
   // names and numbers

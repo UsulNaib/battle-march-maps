@@ -32,7 +32,7 @@ const EN = {
   ck_noLayout: "No legal layout found for {n} features. Try fewer features, smaller pieces or the Matched Play spacing.",
   m_pitched: "Pitched Battle", m_close: "Close Encounter", m_opposed: "Opposed Flanks", m_meeting: "Meeting Engagement", m_pass: "Mountain Pass", m_outflank: "Outflank",
   k_hill: "Hill", k_wood: "Wood", k_building: "Building", k_ruins: "Ruins", k_marsh: "Marsh", k_rocky: "Rocky ground", k_wall: "Wall", k_hedge: "Hedge", k_fence: "Fence",
-  o_trove: "Treasure trove", o_landmark: "Landmark",
+  o_trove: "Treasure trove", o_landmark: "Landmark", impassable: "impassable",
   footer: "Unofficial fan tool. Rule numbers from Warhammer: The Old World, the Matched Play Guide and Battle March: General's Companion.",
 };
 export function t(key: string, params: Record<string, string | number> = {}): string {
