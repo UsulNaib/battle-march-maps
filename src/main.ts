@@ -1,6 +1,6 @@
 import { generate, DEFAULT_SETTINGS, Settings, MapResult } from "./generate";
 import { renderSvg, Layers } from "./render";
-import { BOARDS, DEPLOY_MAPS, AREA_KINDS, OBSTACLE_KINDS, Kind, defaultFeatureCount } from "./rules";
+import { BOARDS, DEPLOY_MAPS, AREA_KINDS, OBSTACLE_KINDS, Kind, SizeMode, defaultFeatureCount } from "./rules";
 import { centroid } from "./geom";
 import { t } from "./i18n";
 import { rulesSummaryHtml } from "./summary";
@@ -24,6 +24,11 @@ function readHash(): Settings {
   s.mirror = (q.get("mi") as Settings["mirror"]) || s.mirror;
   s.objectives = (q.get("o") as Settings["objectives"]) || s.objectives;
   s.size = (q.get("sz") as Settings["size"]) || s.size;
+  s.sizes = {};
+  for (const part of (q.get("ks") || "").split(",")) {
+    const [k, v] = part.split(":");
+    if (AREA_KINDS.includes(k as Kind) && ["8x8", "8x6", "random"].includes(v)) s.sizes[k as Kind] = v as SizeMode;
+  }
   s.rotation = (q.get("r") as Settings["rotation"]) || s.rotation;
   s.spacing = (q.get("sp") as Settings["spacing"]) || s.spacing;
   if (q.get("n")) s.count = Math.max(0, Math.min(8, +q.get("n")!));
@@ -34,7 +39,7 @@ function readHash(): Settings {
 }
 function writeHash(s: Settings) {
   const q = new URLSearchParams({
-    s: s.seed, b: s.board, m: s.map, mi: s.mirror, o: s.objectives, sz: s.size, r: s.rotation, sp: s.spacing,
+    s: s.seed, b: s.board, m: s.map, mi: s.mirror, o: s.objectives, sz: s.size, ks: AREA_KINDS.map((k) => `${k}:${s.sizes[k] || s.size}`).join(","), r: s.rotation, sp: s.spacing,
     n: String(s.count), ob: String(s.obstacles), k: s.kinds.join(","), c: String(s.candidates)
   });
   history.replaceState(null, "", "#" + q.toString());
@@ -46,6 +51,7 @@ let result: MapResult;
 // ---------- UI ----------
 const opt = (v: string, label: string, cur: string) => `<option value="${v}" ${v === cur ? "selected" : ""}>${esc(label)}</option>`;
 
+const sizeOpts = (cur: string) => `${opt("8x8", "8×8″", cur)}${opt("8x6", "8×6″", cur)}${opt("random", t("sizeRandom"), cur)}`;
 function controlsHtml(s: Settings): string {
   const auto = defaultFeatureCount(BOARDS.find((b) => b.id === s.board) || BOARDS[0]);
   return `<form class="card controls" id="form" aria-label="${esc(t("settingsH"))}">
@@ -59,16 +65,17 @@ function controlsHtml(s: Settings): string {
     </div>
     <label class="f">${t("objectives")}<select id="objectives">${(["roll", "troves2", "troves3", "landmark", "none"] as const).map((o) => opt(o, t(o), s.objectives)).join("")}</select></label>
     <label class="f">${t("spacing")}<select id="spacing">${opt("mpg", t("mpg"), s.spacing)}${opt("rulebook", t("rulebook"), s.spacing)}</select></label>
-    <div class="row">
-      <label class="f">${t("size")}<select id="size">${opt("random", t("sizeRandom"), s.size)}${opt("8x8", "8×8″", s.size)}${opt("8x6", "8×6″", s.size)}</select></label>
-      <label class="f">${t("rotation")}<select id="rotation">${opt("free", t("free"), s.rotation)}${opt("square", t("square"), s.rotation)}</select></label>
-    </div>
+    <label class="f">${t("rotation")}<select id="rotation">${opt("free", t("free"), s.rotation)}${opt("square", t("square"), s.rotation)}</select></label>
     <div class="row">
       <label class="f">${t("count")}<select id="count">${opt("0", `${t("countAuto")} (${auto})`, String(s.count))}${[2, 3, 4, 5, 6, 7, 8].map((n) => opt(String(n), String(n), String(s.count))).join("")}</select></label>
       <label class="f">${t("obstacles")}<select id="obstacles">${[0, 1, 2, 3].map((n) => opt(String(n), String(n), String(s.obstacles))).join("")}</select></label>
     </div>
-    <fieldset style="border:0;margin:0;padding:0;display:grid;gap:6px"><legend class="f" style="font-size:.82rem;font-weight:600;color:var(--muted);padding:0;margin-bottom:6px">${t("kinds")}</legend>
-      <div class="chips">${[...AREA_KINDS, ...OBSTACLE_KINDS].map((k) => `<label class="chip"><input type="checkbox" data-kind="${k}" ${s.kinds.includes(k) ? "checked" : ""}>${t("k_" + k)}</label>`).join("")}</div></fieldset>
+    <fieldset class="kinds"><legend>${t("kinds")}</legend>
+      <div class="kindrow kindall"><span>${t("allSizes")}</span><select id="sizeAll" aria-label="${esc(t("allSizes"))}"><option value="">–</option>${sizeOpts("")}</select></div>
+      ${AREA_KINDS.map((k) => `<div class="kindrow"><label class="chip"><input type="checkbox" data-kind="${k}" ${s.kinds.includes(k) ? "checked" : ""}>${t("k_" + k)}</label>
+        <select data-ksize="${k}" aria-label="${esc(t("size") + ": " + t("k_" + k))}">${sizeOpts(s.sizes[k] || s.size)}</select></div>`).join("")}
+      ${OBSTACLE_KINDS.map((k) => `<div class="kindrow"><label class="chip"><input type="checkbox" data-kind="${k}" ${s.kinds.includes(k) ? "checked" : ""}>${t("k_" + k)}</label><span class="fixed">1×8″</span></div>`).join("")}
+    </fieldset>
     <label class="f">${t("candidates")}<select id="candidates">${[50, 250, 1000].map((n) => opt(String(n), String(n), String(s.candidates))).join("")}</select></label>
   </form>`;
 }
@@ -139,7 +146,7 @@ function readForm(): Settings {
   const v = (id: string) => (document.getElementById(id) as HTMLInputElement | HTMLSelectElement).value;
   return {
     ...settings, seed: v("seed").trim() || randomSeed(), board: v("board"), map: v("map"), mirror: v("mirror") as Settings["mirror"],
-    objectives: v("objectives") as Settings["objectives"], spacing: v("spacing") as Settings["spacing"], size: v("size") as Settings["size"],
+    objectives: v("objectives") as Settings["objectives"], spacing: v("spacing") as Settings["spacing"], sizes: Object.fromEntries([...document.querySelectorAll<HTMLSelectElement>("[data-ksize]")].map((el) => [el.dataset.ksize, el.value])) as Settings["sizes"],
     rotation: v("rotation") as Settings["rotation"], count: +v("count"), obstacles: +v("obstacles"), candidates: +v("candidates"),
     kinds: [...document.querySelectorAll<HTMLInputElement>("[data-kind]")].filter((i) => i.checked).map((i) => i.dataset.kind as Kind),
   };
@@ -164,6 +171,10 @@ app.addEventListener("change", (e) => {
     try { localStorage.setItem("bmm.layers", JSON.stringify(layers)); } catch { /* ignore */ }
     document.getElementById("svgbox")!.innerHTML = renderSvg(result, layers);
     return;
+  }
+  if (el.id === "sizeAll") {
+    if (!el.value) return;
+    document.querySelectorAll<HTMLSelectElement>("[data-ksize]").forEach((x) => (x.value = el.value));
   }
   if (el.closest("#form")) { settings = readForm(); run(); }
 });

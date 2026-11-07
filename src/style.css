@@ -29,6 +29,12 @@ h2 { font: 400 1.25rem/1.2 var(--display); margin: 0 0 10px; }
 .controls { display: grid; gap: 12px; }
 label.f { display: grid; gap: 4px; font-size: .82rem; font-weight: 600; color: var(--muted); letter-spacing: .02em; }
 select, input[type=text], input[type=number] { font: 15px var(--body); color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 7px 9px; width: 100%; min-width: 0; }
+.kinds { border: 0; margin: 0; padding: 0; display: grid; gap: 6px; min-width: 0; }
+.kinds legend { font-size: .82rem; font-weight: 600; color: var(--muted); letter-spacing: .02em; padding: 0; margin-bottom: 6px; }
+.kindrow { display: grid; grid-template-columns: minmax(0, 1fr) 7.5em; gap: 8px; align-items: center; }
+.kindrow select { padding: 4px 6px; font-size: 14px; }
+.kindrow .fixed { font-size: .85rem; color: var(--muted); padding-left: 7px; }
+.kindall { font-size: .85rem; color: var(--muted); padding-bottom: 4px; border-bottom: 1px dashed var(--line); }
 .row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 10px; }
 .chips { display: flex; flex-wrap: wrap; gap: 6px; }
 .chip { display: inline-flex; align-items: center; gap: 6px; background: var(--chip); border: 1px solid var(--line); border-radius: 999px; padding: 3px 10px 3px 8px; font-size: .85rem; cursor: pointer; user-select: none; }

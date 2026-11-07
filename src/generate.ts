@@ -11,7 +11,8 @@ export type Settings = {
   map: string; // deployment map id or "random"
   mirror: "random" | "yes" | "no";
   objectives: ObjectiveMode;
-  size: SizeMode;
+  size: SizeMode; // default for types without their own size
+  sizes: Partial<Record<Kind, SizeMode>>; // size per terrain type
   rotation: "free" | "square";
   spacing: "mpg" | "rulebook";
   count: number; // 0 = rule default (one per 12" of the longest edge)
@@ -21,7 +22,7 @@ export type Settings = {
 };
 
 export const DEFAULT_SETTINGS: Settings = {
-  seed: "", board: "30x44", map: "random", mirror: "random", objectives: "roll", size: "random",
+  seed: "", board: "30x44", map: "random", mirror: "random", objectives: "roll", size: "random", sizes: {},
   rotation: "free", spacing: "mpg", count: 0, obstacles: 1,
   kinds: ["hill", "wood", "building", "ruins", "marsh", "rocky", "wall", "hedge", "fence"], candidates: 250,
 };
@@ -111,7 +112,7 @@ function placeTerrain(rng: Rng, s: Settings, b: Board, kinds: Kind[], objectives
   const placed: Feature[] = [];
   for (let i = 0; i < kinds.length; i++) {
     const kind = kinds[i];
-    const { w, h } = sizeFor(rng, kind, s.size);
+    const { w, h } = sizeFor(rng, kind, s.sizes[kind] || s.size);
     let ok = false;
     for (let t = 0; t < 250 && !ok; t++) {
       const rot = s.rotation === "free" ? Math.round(rng() * 180) : rng() < 0.5 ? 0 : 90;

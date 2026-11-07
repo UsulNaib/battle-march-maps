@@ -9,7 +9,7 @@ A placement table tells you where to put each piece on your table, and every rul
 ## How a map is made
 
 1. Board (30×44″ or 36×48″), deployment map (D6 or chosen, mirrored or not) and objectives (D6 or chosen).
-2. Terrain pieces are 8×8″ or 8×6″ (fixed or random), obstacles are 1×8″; any angle or 0°/90° only.
+2. Each terrain type has its own size: 8×8″, 8×6″ or random. Obstacles are 1×8″; any angle or 0°/90° only.
 3. Hundreds of legal layouts are generated from the seed; the most interesting one is kept. The score rewards
    fair cover for both sides, open deployment zones, a mix of open and blocked firing lanes, spread, no gaps
    under 2″ and a variety of terrain types.

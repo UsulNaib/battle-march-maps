@@ -53,3 +53,13 @@ describe("objectives", () => {
         }
     });
 });
+
+describe("sizes per terrain type", () => {
+  it("gives each type its own size", () => {
+    const sizes = { hill: "8x8", wood: "8x6", building: "8x6", ruins: "8x8", marsh: "8x6", rocky: "8x8" } as const;
+    for (let i = 0; i < 20; i++) {
+      const r = generate({ ...DEFAULT_SETTINGS, seed: "ks" + i, sizes, obstacles: 0, candidates: 10 });
+      for (const f of r.features) expect(`${f.w}x${f.h}`).toBe(sizes[f.kind as keyof typeof sizes]);
+    }
+  });
+});
