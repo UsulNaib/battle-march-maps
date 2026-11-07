@@ -56,4 +56,10 @@ npm run build    # static site in dist/
 Pushing to `main` runs the tests and deploys to GitHub Pages (`.github/workflows/deploy.yml`).
 In the repository settings, set **Pages → Source** to **GitHub Actions** once.
 
-Unofficial fan tool, not affiliated with Games Workshop. Only rule values are used; no rules text is reproduced.
+## License
+
+The code is released under the [MIT License](LICENSE).
+
+Unofficial fan tool, not affiliated with or endorsed by Games Workshop. Warhammer, The Old World and Battle March
+are trademarks of Games Workshop; the MIT License covers only this project's own code. Only rule values are used;
+no rules text is reproduced.
