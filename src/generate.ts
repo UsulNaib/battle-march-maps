@@ -22,7 +22,7 @@ export type Settings = {
 };
 
 export const DEFAULT_SETTINGS: Settings = {
-  seed: "", board: "30x44", map: "random", mirror: "random", objectives: "roll", size: "8x8", sizes: { wood: "8x6" },
+  seed: "", board: "36x48", map: "random", mirror: "random", objectives: "roll", size: "8x8", sizes: { wood: "8x6" },
   rotation: "free", spacing: "mpg", count: 0, obstacles: 1,
   kinds: ["hill", "wood", "building", "ruins", "marsh", "rocky", "wall", "hedge", "fence"], candidates: 250,
 };

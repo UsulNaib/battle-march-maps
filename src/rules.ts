@@ -3,8 +3,8 @@ import { Poly, circlePoly } from "./geom";
 
 export type Board = { id: string; w: number; h: number };
 export const BOARDS: Board[] = [
-  { id: "30x44", w: 44, h: 30 },
   { id: "36x48", w: 48, h: 36 },
+  { id: "30x44", w: 44, h: 30 },
 ];
 
 export const RULES = {
