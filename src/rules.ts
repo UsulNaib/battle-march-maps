@@ -117,3 +117,16 @@ export type ObjectiveMode = "roll" | "none" | "troves2" | "troves3" | "landmark"
 export const objectiveFromRoll = (r: number): Exclude<ObjectiveMode, "roll"> => (r <= 2 ? "troves2" : r <= 4 ? "troves3" : "landmark");
 
 export const zoneCircle = (b: Board) => circlePoly(b.w / 2, b.h / 2, RULES.centreExclusion, 72);
+
+/** Terrain rules the players agree before the game. "random" is rolled per map from the seed. */
+export const TERRAIN_RULE_OPTIONS = {
+  wood: ["difficult", "dangerous", "impassable"],
+  building: ["impassable", "occupiable"],
+  ruins: ["difficult", "impassable", "occupiable"],
+  marsh: ["difficult", "dangerous"],
+  rocky: ["difficult", "dangerous"],
+  wilderness: ["on", "off"],
+} as const;
+export type TerrainRuleKey = keyof typeof TERRAIN_RULE_OPTIONS;
+export type TerrainRules = Record<TerrainRuleKey, string>;
+export const TERRAIN_RULE_KEYS = Object.keys(TERRAIN_RULE_OPTIONS) as TerrainRuleKey[];

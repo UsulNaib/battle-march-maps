@@ -1,6 +1,6 @@
 // Short summary, in our own words, of only the rules that apply to the generated map. Links go to the online rules index.
 import { MapResult } from "./generate";
-import { Kind } from "./rules";
+import { Kind, isObstacle } from "./rules";
 import { t } from "./i18n";
 
 const IDX = "https://tow.whfb.app";
@@ -32,76 +32,58 @@ const CAT_RULES: Record<Cat, { title: string; path: string; items: string[] }> =
   },
 };
 
-const KIND_RULES: Record<Kind, { cats: Cat[]; items: string[]; links: [string, string][] }> = {
-  hill: {
-    cats: [],
-    items: [
-      "Counts as open ground for movement.",
-      "A unit fighting from the high ground gains an advantage in combat.",
-      "Vantage point: a unit on the hill shoots with one extra rank, and a unit entirely on it can see over models that are not on a hill. In turn, units not on a hill can see it over other models.",
-      "Beyond the crest: the hill blocks line of sight between two models that are both off it.",
-    ],
-    links: [["/battlefield-terrain/hills", "Hills"], ["/battlefield-terrain/vantage-point", "Vantage point"], ["/battlefield-terrain/beyond-the-crest", "Beyond the crest"]],
-  },
-  wood: {
-    cats: ["difficult"],
-    items: [
-      "Usually difficult terrain; agree before the game if this wood is so dense it should be dangerous or impassable.",
-      "Arboreal gloom: a wood blocks line of sight between two models that are both outside it.",
-      "Woodland boundary: a unit with more than half its models inside the wood's edge counts as being in partial cover, wherever the trees stand. Trees may be moved aside to fit models.",
-    ],
-    links: [["/battlefield-terrain/woods", "Woods"], ["/battlefield-terrain/arboreal-gloom", "Arboreal gloom"], ["/battlefield-terrain/woodland-boundaries", "Woodland boundaries"]],
-  },
-  building: {
-    cats: ["impassable"],
-    items: [
-      "Impassable, unless both players agree that buildings at least 4″ across (this one qualifies) can be occupied.",
-      "If occupiable: one infantry unit of Unit Strength 20 or less can garrison it. It counts as in full cover, sees all round, cannot charge, and up to half its models can shoot or cast.",
-      "Templates hit the garrison only on a 5+; a cannon hit becomes D3 Strength 4, AP −1 hits and the ball stops.",
-      "In combat both sides fight as skirmishers with at most five models each; the garrison never gives ground or falls back, and is destroyed if it breaks. The winner may move in.",
-    ],
-    links: [["/battlefield-terrain/buildings", "Buildings"]],
-  },
-  ruins: {
-    cats: [],
-    items: [
-      "Ruins have no category of their own: agree before the game how to treat them. Common choices are difficult terrain (loose rubble) or a building (impassable, or occupiable by a garrison if both players agree).",
-      "As a scenario special feature they can be Dark Ruins, with their own rules and victory points.",
-    ],
-    links: [["/battlefield-terrain/categories-of-terrain", "Terrain categories"], ["/battlefield-terrain/dark-ruins", "Dark ruins"]],
-  },
-  marsh: {
-    cats: ["difficult", "dangerous"],
-    items: [
-      "Agree before the game: shallow, muddy marsh is difficult terrain; a deep swamp is dangerous terrain.",
-    ],
-    links: [["/battlefield-terrain/difficult-terrain", "Difficult terrain"], ["/battlefield-terrain/dangerous-terrain", "Dangerous terrain"]],
-  },
-  rocky: {
-    cats: ["difficult", "dangerous"],
-    items: [
-      "Rocky ground is difficult terrain; agree before the game if it is extremely rocky, which makes it dangerous terrain.",
-    ],
-    links: [["/battlefield-terrain/difficult-terrain", "Difficult terrain"], ["/battlefield-terrain/dangerous-terrain", "Dangerous terrain"]],
-  },
-  wall: { cats: [], items: [], links: [] },
-  hedge: { cats: [], items: [], links: [] },
-  fence: { cats: [], items: [], links: [] },
-};
-const OBSTACLE_RULES = {
-  cats: ["difficult"] as Cat[],
-  items: [
-    "A low linear obstacle (under 2″ high). Crossing it counts as moving through difficult terrain.",
-    "A unit in combat that straddles it is Disrupted and loses its Rank Bonus.",
-    "Defending it: a unit with its front rank against the obstacle makes charging enemies stop on the far side; their charge is disordered unless they can Fly.",
-  ],
-  links: [["/battlefield-terrain/low-linear-obstacles", "Low linear obstacles"], ["/battlefield-terrain/defended-low-linear-obstacles", "Defended obstacles"]] as [string, string][],
-};
-(["wall", "hedge", "fence"] as Kind[]).forEach((k) => (KIND_RULES[k] = OBSTACLE_RULES));
+const GARRISON = [
+  "One infantry unit of Unit Strength 20 or less can garrison it. It counts as in full cover, sees all round, cannot charge, and up to half its models can shoot or cast.",
+  "Templates hit the garrison only on a 5+; a cannon hit becomes D3 Strength 4, AP −1 hits and the ball stops.",
+  "In combat both sides fight as skirmishers with at most five models each; the garrison never gives ground or falls back, and is destroyed if it breaks. The winner may move in.",
+];
+type Block = { cats: Cat[]; tag: string; items: string[]; links: [string, string][] };
+
+/** Rules for one terrain type, according to what the players agreed in the settings. */
+function kindRules(k: Kind, R: MapResult["terrainRules"]): Block {
+  const catOf = (v: string): Cat[] => (v === "difficult" || v === "dangerous" || v === "impassable" ? [v] : v === "occupiable" ? [] : []);
+  switch (k) {
+    case "hill":
+      return { cats: [], tag: "", items: [
+        "Counts as open ground for movement.",
+        "A unit fighting from the high ground gains an advantage in combat.",
+        "Vantage point: a unit on the hill shoots with one extra rank, and a unit entirely on it can see over models that are not on a hill. In turn, units not on a hill can see it over other models.",
+        "Beyond the crest: the hill blocks line of sight between two models that are both off it.",
+      ], links: [["/battlefield-terrain/hills", "Hills"], ["/battlefield-terrain/vantage-point", "Vantage point"], ["/battlefield-terrain/beyond-the-crest", "Beyond the crest"]] };
+    case "wood": {
+      const v = R.wood;
+      const items = [`Agreed as ${v} terrain.`, "Arboreal gloom: the wood blocks line of sight between two models that are both outside it."];
+      if (v !== "impassable") items.push("Woodland boundary: a unit with more than half its models inside the wood's edge counts as being in partial cover, wherever the trees stand. Trees may be moved aside to fit models.");
+      return { cats: catOf(v), tag: v, items, links: [["/battlefield-terrain/woods", "Woods"], ["/battlefield-terrain/arboreal-gloom", "Arboreal gloom"], ["/battlefield-terrain/woodland-boundaries", "Woodland boundaries"]] };
+    }
+    case "building":
+      return R.building === "occupiable"
+        ? { cats: [], tag: "occupiable", items: ["Agreed as occupiable (it is at least 4″ across); otherwise no unit can enter it.", ...GARRISON], links: [["/battlefield-terrain/buildings", "Buildings"]] }
+        : { cats: ["impassable"], tag: "impassable", items: ["Agreed as impassable: no unit can enter it."], links: [["/battlefield-terrain/buildings", "Buildings"]] };
+    case "ruins":
+      if (R.ruins === "occupiable") return { cats: [], tag: "occupiable", items: ["Agreed to work like an occupiable building; otherwise no unit can enter.", ...GARRISON], links: [["/battlefield-terrain/buildings", "Buildings"]] };
+      if (R.ruins === "impassable") return { cats: ["impassable"], tag: "impassable", items: ["Agreed as impassable, like a building."], links: [["/battlefield-terrain/buildings", "Buildings"]] };
+      return { cats: ["difficult"], tag: "difficult", items: ["Agreed as difficult terrain (loose rubble)."], links: [["/battlefield-terrain/difficult-terrain", "Difficult terrain"]] };
+    case "marsh":
+      return { cats: catOf(R.marsh), tag: R.marsh, items: [R.marsh === "dangerous" ? "Agreed as a deep swamp: dangerous terrain." : "Agreed as shallow, muddy ground: difficult terrain."], links: [] };
+    case "rocky":
+      return { cats: catOf(R.rocky), tag: R.rocky, items: [R.rocky === "dangerous" ? "Agreed as extremely rocky ground: dangerous terrain." : "Difficult terrain."], links: [] };
+    default:
+      return { cats: ["difficult"], tag: "", items: [
+        "A low linear obstacle (under 2″ high). Crossing it counts as moving through difficult terrain.",
+        "A unit in combat that straddles it is Disrupted and loses its Rank Bonus.",
+        "Defending it: a unit with its front rank against the obstacle makes charging enemies stop on the far side; their charge is disordered unless they can Fly.",
+      ], links: [["/battlefield-terrain/low-linear-obstacles", "Low linear obstacles"], ["/battlefield-terrain/defended-low-linear-obstacles", "Defended obstacles"]] };
+  }
+}
+
+/** Short tag shown next to a terrain name, e.g. "dangerous". */
+export const terrainTag = (k: Kind, R: MapResult["terrainRules"]) => kindRules(k, R).tag;
 
 export function rulesSummaryHtml(r: MapResult): string {
   const kinds = new Set(r.features.map((f) => f.kind));
-  const natural = ["wood", "rocky", "marsh"].filter((k) => kinds.has(k as never));
+  // natural features a unit can actually enter (an impassable wood never triggers the wilderness table)
+  const natural = ["wood", "rocky", "marsh"].filter((k) => kinds.has(k as never) && !(k === "wood" && r.terrainRules.wood === "impassable"));
   const troves = r.objectives.filter((o) => o.kind === "trove").length;
   const landmark = r.objectives.some((o) => o.kind === "landmark");
   const sec: string[] = [];
@@ -110,23 +92,25 @@ export function rulesSummaryHtml(r: MapResult): string {
     <li>The players choose their deployment zones, a roll-off decides who deploys the first unit, and then they deploy one unit at a time, alternating.</li>
     <li>${link("/battle-march/battle-march-deployment-maps", "Deployment maps")} · ${link("/battle-march/first-turn-battle-march", "First turn")}</li></ul>`);
 
-  // One block per terrain type on this map, then the general category rules those types refer to.
+  // One block per terrain type on this map, as agreed in the settings, then the category rules they refer to.
   const order: Kind[] = ["hill", "wood", "building", "ruins", "marsh", "rocky", "wall", "hedge", "fence"];
   const present = order.filter((k) => kinds.has(k));
   const cats = new Set<Cat>();
-  const obstacles = present.filter((k) => KIND_RULES[k] === OBSTACLE_RULES);
+  const obstacles = present.filter(isObstacle);
+  const rolled = (k: string) => (r.rolledRules.includes(k) ? " (rolled)" : "");
   for (const k of present) {
-    const kr = KIND_RULES[k];
-    if (kr === OBSTACLE_RULES && k !== obstacles[0]) continue;
+    if (isObstacle(k) && k !== obstacles[0]) continue;
+    const kr = kindRules(k, r.terrainRules);
     kr.cats.forEach((c) => cats.add(c));
-    const title = kr === OBSTACLE_RULES ? obstacles.map((o) => t("k_" + o)).join(", ") : t("k_" + k);
-    sec.push(`<h3>${title}</h3><ul>${kr.items.map((i) => `<li>${i}</li>`).join("")}<li>${kr.links.map(([p, x]) => link(p, x)).join(" · ")}</li></ul>`);
+    const title = isObstacle(k) ? obstacles.map((o) => t("k_" + o)).join(", ") : t("k_" + k) + (kr.tag ? ` – ${kr.tag}${rolled(k)}` : "");
+    const links = kr.links.length ? `<li>${kr.links.map(([p, x]) => link(p, x)).join(" · ")}</li>` : "";
+    sec.push(`<h3>${title}</h3><ul>${kr.items.map((i) => `<li>${i}</li>`).join("")}${links}</ul>`);
   }
   for (const c of ["difficult", "dangerous", "impassable"] as Cat[])
     if (cats.has(c)) sec.push(`<h3>${CAT_RULES[c].title}</h3><ul>${CAT_RULES[c].items.map((i) => `<li>${i}</li>`).join("")}<li>${link(CAT_RULES[c].path, "Rules index")}</li></ul>`);
 
-  if (natural.length)
-    sec.push(`<h3>Wilderness terrain (optional)</h3><ul>
+  if (natural.length && r.terrainRules.wilderness === "on")
+    sec.push(`<h3>Wilderness terrain${rolled("wilderness")}</h3><ul>
       <li>The first time a unit is deployed in, or ends its move in, a natural feature (${natural.map((k) => t("k_" + k).toLowerCase()).join(", ")} on this map), roll a D6 to find out what it is: briar patch, defensive position, toxic spores, lingering magic, healing herbs or a troll's lair.</li>
       <li>${link("/battle-march/wilderness-terrain", "Wilderness terrain table")}</li></ul>`);
 

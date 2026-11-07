@@ -63,3 +63,16 @@ describe("sizes per terrain type", () => {
     }
   });
 });
+
+describe("agreed terrain rules", () => {
+  it("keeps chosen rules and rolls random ones from the seed without moving terrain", () => {
+    const base = { ...DEFAULT_SETTINGS, seed: "tr1", candidates: 20 };
+    const a = generate({ ...base, terrainRules: { wood: "random", building: "random", ruins: "random", marsh: "random", rocky: "random", wilderness: "random" } });
+    const b = generate({ ...base, terrainRules: { wood: "dangerous", building: "occupiable", ruins: "impassable", marsh: "difficult", rocky: "difficult", wilderness: "off" } });
+    expect(JSON.stringify(a.features)).toBe(JSON.stringify(b.features));
+    expect(b.terrainRules.wood).toBe("dangerous");
+    expect(b.rolledRules).toEqual([]);
+    expect(a.rolledRules.length).toBe(6);
+    expect(generate({ ...base, terrainRules: a.settings.terrainRules }).terrainRules).toEqual(a.terrainRules);
+  });
+});

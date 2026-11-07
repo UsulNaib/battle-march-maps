@@ -2,6 +2,7 @@ import { MapResult, Feature } from "./generate";
 import { Pt, Poly, bbox, polyGap, pointGap, centroid } from "./geom";
 import { isObstacle, RULES } from "./rules";
 import { t } from "./i18n";
+import { terrainTag } from "./summary";
 
 export type Layers = { grid: boolean; dist: boolean; gaps: boolean; centre: boolean; zones: boolean; names: boolean };
 
@@ -149,7 +150,11 @@ export function renderSvg(r: MapResult, L: Layers): string {
   for (const f of r.features) {
     const c = centroid(f.poly);
     s += `<circle cx="${c.x}" cy="${c.y}" r="0.75" fill="${r.settings.spacing === "rulebook" ? (f.owner === "A" ? C.A : C.B) : C.ink}" stroke="#fff" stroke-width="0.1"/>` + label(c.x, c.y + 0.04, String(f.n), 0.85, "#fff", "middle", false);
-    if (L.names) s += label(c.x, c.y + 1.45, t("k_" + f.kind), 0.8, C.ink);
+    if (L.names) {
+      const tag = terrainTag(f.kind, r.terrainRules);
+      s += label(c.x, c.y + 1.45, t("k_" + f.kind), 0.8, C.ink);
+      if (tag) s += label(c.x, c.y + 2.35, tag, 0.65, C.ink);
+    }
   }
   s += `<rect x="0" y="0" width="${W}" height="${H}" fill="none" stroke="${C.edge}" stroke-width="0.14"/>`;
   // legend below the table, in straight, readable text

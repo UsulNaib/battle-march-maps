@@ -3,6 +3,7 @@ import { makeRng, Rng, d6, pick, shuffle } from "./rng";
 import {
   BOARDS, Board, DEPLOY_MAPS, DeployMap, Zone, RULES, Kind, AREA_KINDS, OBSTACLE_KINDS, OBSTACLE_SIZE,
   isObstacle, BLOCKS_LOS, SizeMode, ObjectiveMode, objectiveFromRoll, defaultFeatureCount,
+  TERRAIN_RULE_OPTIONS, TERRAIN_RULE_KEYS, TerrainRules,
 } from "./rules";
 
 export type Settings = {
@@ -19,12 +20,15 @@ export type Settings = {
   obstacles: number; // how many of the features are 1×8" obstacles
   kinds: Kind[];
   candidates: number; // how many valid maps are generated before the best one is kept
+  terrainRules: TerrainRules; // agreed terrain rules; "random" is rolled per map
 };
 
 export const DEFAULT_SETTINGS: Settings = {
   seed: "", board: "36x48", map: "random", mirror: "random", objectives: "roll", size: "8x8", sizes: { wood: "8x6" },
   rotation: "free", spacing: "mpg", count: 0, obstacles: 1,
   kinds: ["hill", "wood", "building", "ruins", "marsh", "rocky", "wall", "hedge", "fence"], candidates: 250,
+  // defaults drawn at random once
+  terrainRules: { wood: "impassable", building: "random", ruins: "difficult", marsh: "dangerous", rocky: "dangerous", wilderness: "on" },
 };
 
 export type Feature = { n: number; kind: Kind; w: number; h: number; cx: number; cy: number; rot: number; owner: "A" | "B"; poly: Poly };
@@ -46,6 +50,10 @@ export type MapResult = {
   scoreParts: ScorePart[];
   tried: number;
   valid: number;
+  /** agreed terrain rules with random choices resolved */
+  terrainRules: TerrainRules;
+  /** which of them were rolled at random */
+  rolledRules: string[];
 };
 
 const f1 = (x: number) => Math.round(x * 10) / 10;
@@ -218,7 +226,18 @@ export function resolveBoard(id: string): Board {
 }
 
 export function generate(settings: Settings): MapResult {
-  const s = { ...DEFAULT_SETTINGS, ...settings };
+  const s = { ...DEFAULT_SETTINGS, ...settings, terrainRules: { ...DEFAULT_SETTINGS.terrainRules, ...(settings.terrainRules || {}) } };
+  // Rolled with their own generator so changing a rule never changes the layout.
+  const rrng = makeRng((s.seed || "battle-march") + "|rules");
+  const terrainRules = {} as TerrainRules;
+  const rolledRules: string[] = [];
+  for (const k of TERRAIN_RULE_KEYS) {
+    const opts = TERRAIN_RULE_OPTIONS[k] as readonly string[];
+    const v = s.terrainRules[k];
+    const rolled = pick(rrng, opts);
+    if (opts.includes(v)) terrainRules[k] = v;
+    else { terrainRules[k] = rolled; rolledRules.push(k); }
+  }
   const rng = makeRng(s.seed || "battle-march");
   const b = resolveBoard(s.board);
   const map = s.map === "random" ? DEPLOY_MAPS[d6(rng) - 1] : DEPLOY_MAPS.find((m) => m.id === s.map) || DEPLOY_MAPS[0];
@@ -251,6 +270,7 @@ export function generate(settings: Settings): MapResult {
   const result: MapResult = {
     settings: s, board: b, map, mirrored, objectiveRoll, objectiveMode, zones, features, objectives,
     checks: [], score: best ? Math.round(best.score) : 0, scoreParts: best ? best.parts : [], tried, valid,
+    terrainRules, rolledRules,
   };
   result.checks = validate(result);
   if (!best) result.checks.unshift({ key: "noLayout", params: { n }, ok: false });

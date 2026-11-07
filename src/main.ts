@@ -1,6 +1,6 @@
 import { generate, DEFAULT_SETTINGS, Settings, MapResult } from "./generate";
 import { renderSvg, svgSize, Layers } from "./render";
-import { BOARDS, DEPLOY_MAPS, AREA_KINDS, OBSTACLE_KINDS, Kind, SizeMode, defaultFeatureCount } from "./rules";
+import { BOARDS, DEPLOY_MAPS, AREA_KINDS, OBSTACLE_KINDS, Kind, SizeMode, defaultFeatureCount, TERRAIN_RULE_OPTIONS, TERRAIN_RULE_KEYS, TerrainRules } from "./rules";
 import { centroid } from "./geom";
 import { t } from "./i18n";
 import { rulesSummaryHtml } from "./summary";
@@ -34,12 +34,17 @@ function readHash(): Settings {
   if (q.get("n")) s.count = Math.max(0, Math.min(8, +q.get("n")!));
   if (q.get("ob")) s.obstacles = Math.max(0, Math.min(4, +q.get("ob")!));
   if (q.get("k")) s.kinds = q.get("k")!.split(",").filter((k) => [...AREA_KINDS, ...OBSTACLE_KINDS].includes(k as Kind)) as Kind[];
+  s.terrainRules = { ...DEFAULT_SETTINGS.terrainRules };
+  for (const part of (q.get("tr") || "").split(",")) {
+    const [k, v] = part.split(":");
+    if (TERRAIN_RULE_KEYS.includes(k as keyof TerrainRules) && ([...TERRAIN_RULE_OPTIONS[k as keyof TerrainRules], "random"] as string[]).includes(v)) s.terrainRules[k as keyof TerrainRules] = v;
+  }
   if (q.get("c")) s.candidates = Math.max(1, Math.min(1000, +q.get("c")!));
   return s;
 }
 function writeHash(s: Settings) {
   const q = new URLSearchParams({
-    s: s.seed, b: s.board, m: s.map, mi: s.mirror, o: s.objectives, sz: s.size, ks: AREA_KINDS.map((k) => `${k}:${s.sizes[k] || s.size}`).join(","), r: s.rotation, sp: s.spacing,
+    s: s.seed, b: s.board, m: s.map, mi: s.mirror, o: s.objectives, sz: s.size, ks: AREA_KINDS.map((k) => `${k}:${s.sizes[k] || s.size}`).join(","), tr: TERRAIN_RULE_KEYS.map((k) => `${k}:${s.terrainRules[k]}`).join(","), r: s.rotation, sp: s.spacing,
     n: String(s.count), ob: String(s.obstacles), k: s.kinds.join(","), c: String(s.candidates)
   });
   history.replaceState(null, "", "#" + q.toString());
@@ -75,6 +80,10 @@ function controlsHtml(s: Settings): string {
       ${AREA_KINDS.map((k) => `<div class="kindrow"><label class="chip"><input type="checkbox" data-kind="${k}" ${s.kinds.includes(k) ? "checked" : ""}>${t("k_" + k)}</label>
         <select data-ksize="${k}" aria-label="${esc(t("size") + ": " + t("k_" + k))}">${sizeOpts(s.sizes[k] || s.size)}</select></div>`).join("")}
       ${OBSTACLE_KINDS.map((k) => `<div class="kindrow"><label class="chip"><input type="checkbox" data-kind="${k}" ${s.kinds.includes(k) ? "checked" : ""}>${t("k_" + k)}</label><span class="fixed">1×8″</span></div>`).join("")}
+    </fieldset>
+    <fieldset class="kinds"><legend>${t("terrainRulesH")}</legend>
+      ${TERRAIN_RULE_KEYS.map((k) => `<div class="kindrow"><span>${t(k === "wilderness" ? "wildTable" : "k_" + k)}</span>
+        <select data-trule="${k}" aria-label="${esc(t(k === "wilderness" ? "wildTable" : "k_" + k))}">${[...TERRAIN_RULE_OPTIONS[k], "random"].map((v) => opt(v, t("tr_" + v), s.terrainRules[k])).join("")}</select></div>`).join("")}
     </fieldset>
     <label class="f">${t("candidates")}<select id="candidates">${[50, 250, 1000].map((n) => opt(String(n), String(n), String(s.candidates))).join("")}</select></label>
   </form>`;
@@ -148,6 +157,7 @@ function readForm(): Settings {
     ...settings, seed: v("seed").trim() || randomSeed(), board: v("board"), map: v("map"), mirror: v("mirror") as Settings["mirror"],
     objectives: v("objectives") as Settings["objectives"], spacing: v("spacing") as Settings["spacing"], sizes: Object.fromEntries([...document.querySelectorAll<HTMLSelectElement>("[data-ksize]")].map((el) => [el.dataset.ksize, el.value])) as Settings["sizes"],
     rotation: v("rotation") as Settings["rotation"], count: +v("count"), obstacles: +v("obstacles"), candidates: +v("candidates"),
+    terrainRules: Object.fromEntries([...document.querySelectorAll<HTMLSelectElement>("[data-trule]")].map((el) => [el.dataset.trule, el.value])) as TerrainRules,
     kinds: [...document.querySelectorAll<HTMLInputElement>("[data-kind]")].filter((i) => i.checked).map((i) => i.dataset.kind as Kind),
   };
 }

@@ -14,6 +14,7 @@ A placement table tells you where to put each piece on your table, and every rul
    fair cover for both sides, open deployment zones, a mix of open and blocked firing lanes, spread, no gaps
    under 2″ and a variety of terrain types.
 4. Objectives are placed after terrain, at least 3″ from it.
+5. Terrain rules the players would agree before the game (woods, buildings, ruins, marsh, rocky ground, wilderness table) are set in the settings or rolled per map; the page lists only the rules that apply.
 
 The same seed and settings always give the same map; the link in the address bar contains both.
 
