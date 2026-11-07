@@ -66,11 +66,17 @@ th { font-size: .78rem; text-transform: uppercase; letter-spacing: .06em; color:
 .bar .track { height: 7px; background: var(--chip); border-radius: 4px; overflow: hidden; }
 .bar .fill { height: 100%; background: var(--accent); }
 .small { font-size: .85rem; color: var(--muted); }
+.rules h3 { font: 600 .82rem/1.3 var(--body); text-transform: uppercase; letter-spacing: .06em; color: var(--accent); margin: 0 0 6px; }
+.rules ul { margin: 0; padding-left: 1.1em; display: grid; gap: 4px; font-size: .92rem; }
+.rules a { color: var(--accent); }
+.rulegrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px 24px; margin-top: 10px; }
+.rulegrid > div { min-width: 0; }
 footer { margin-top: 28px; color: var(--muted); font-size: .82rem; }
 .toast { position: fixed; left: 50%; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--ink); color: var(--bg); padding: 8px 14px; border-radius: 8px; font-weight: 600; }
 @media print {
   body { background: #fff; color: #000; }
   .controls, .toolbar, header .btns, footer, .scorecard, .checkcard { display: none !important; }
+  .rules a { color: inherit; text-decoration: none; }
   .layout { grid-template-columns: 1fr; }
   .card { box-shadow: none; border: none; padding: 0; }
   .svgbox svg { min-width: 0; }

@@ -3,6 +3,7 @@ import { renderSvg, Layers } from "./render";
 import { BOARDS, DEPLOY_MAPS, AREA_KINDS, OBSTACLE_KINDS, Kind, defaultFeatureCount } from "./rules";
 import { centroid } from "./geom";
 import { t } from "./i18n";
+import { rulesSummaryHtml } from "./summary";
 import { randomSeed } from "./rng";
 
 const app = document.getElementById("app")!;
@@ -110,6 +111,7 @@ function resultHtml(r: MapResult): string {
     </section>
     <section class="card"><h2>${t("placement")}</h2><p class="small">${t("howTo", { w: W, h: H })}</p>
         <div class="tablebox"><table><thead><tr><th>${t("colPiece")}</th><th>${t("colSize")}</th><th>${t("colCentre")}</th><th>${t("colTurn")}</th></tr></thead><tbody>${rows}${orows}</tbody></table></div></section>
+    ${rulesSummaryHtml(r)}
     <div class="cols">
       <section class="card checkcard"><h2>${t("checks")}</h2>
         <div class="summary ${bad.length ? "bad" : "ok"}">${bad.length ? t("someBad", { n: bad.length }) : t("allOk", { n: r.checks.length })}</div>
