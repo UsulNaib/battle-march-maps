@@ -24,7 +24,7 @@ function readHash(): Settings {
   s.mirror = (q.get("mi") as Settings["mirror"]) || s.mirror;
   s.objectives = (q.get("o") as Settings["objectives"]) || s.objectives;
   s.size = (q.get("sz") as Settings["size"]) || s.size;
-  s.sizes = {};
+  s.sizes = { ...DEFAULT_SETTINGS.sizes };
   for (const part of (q.get("ks") || "").split(",")) {
     const [k, v] = part.split(":");
     if (AREA_KINDS.includes(k as Kind) && ["8x8", "8x6", "random"].includes(v)) s.sizes[k as Kind] = v as SizeMode;
