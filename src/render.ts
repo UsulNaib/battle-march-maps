@@ -140,6 +140,11 @@ export function renderSvg(r: MapResult, L: Layers): string {
       if (best.d > 0.2) s += dimLine(best.a, best.b, f1(best.d), "#5a3f78");
     }
   }
+  // objective names
+  if (L.names) r.objectives.forEach((o, i) => {
+    const name = o.kind === "landmark" ? t("o_landmark") : `${t("o_trove")} ${i + 1}`;
+    s += label(o.x, o.y + o.r + 0.85, name, 0.75, "#6e4f08");
+  });
   // names and numbers
   for (const f of r.features) {
     const c = centroid(f.poly);
