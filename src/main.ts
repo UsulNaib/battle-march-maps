@@ -104,12 +104,13 @@ function resultHtml(r: MapResult): string {
   return `<section class="card mapcard" aria-label="Map">
       <div class="meta"><span class="name">${esc(t("m_" + r.map.id))}</span>
         <span class="sub">${H}×${W}″${r.mirrored ? " · " + t("mirroredNote") : ""} · ${esc(objText)} · ${t("seed")} <code>${esc(r.settings.seed)}</code></span></div>
-      <div class="svgbox" id="svgbox">${renderSvg(r, layers)}</div>
+      <div class="mapwrap"><div class="svgbox" id="svgbox">${renderSvg(r, layers)}</div>
+        <button type="button" id="fullscreen" class="fsbtn" aria-label="${esc(t("fullscreen"))}" title="${esc(t("fullscreen"))}"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4h6v6M20 4l-7 7M10 20H4v-6M4 20l7-7"/></svg></button></div>
       ${notes.length ? `<ul class="notes">${notes.map((n) => `<li>${esc(n)}</li>`).join("")}</ul>` : ""}
       <div class="toolbar">
         <div class="chips" role="group" aria-label="${esc(t("layers"))}">${(["grid", "zones", "dist", "gaps", "centre", "names"] as const).map((k) =>
           `<label class="chip"><input type="checkbox" data-layer="${k}" ${layers[k] ? "checked" : ""}>${t("l" + k[0].toUpperCase() + k.slice(1))}</label>`).join("")}</div>
-        <div class="btns"><button type="button" id="reroll">${t("newSeed")}</button><button type="button" id="fullscreen">${t("fullscreen")}</button><button type="button" id="copyimg" class="primary">${t("copyImage")}</button><button type="button" id="dlsvg">${t("exportSvg")}</button><button type="button" id="dlpng">${t("exportPng")}</button><button type="button" id="dlpdf">${t("exportPdf")}</button><button type="button" id="print">${t("print")}</button><button type="button" id="link">${t("copyLink")}</button></div>
+        <div class="btns"><button type="button" id="reroll">${t("newSeed")}</button><button type="button" id="copyimg" class="primary">${t("copyImage")}</button><button type="button" id="dlsvg">${t("exportSvg")}</button><button type="button" id="dlpng">${t("exportPng")}</button><button type="button" id="dlpdf">${t("exportPdf")}</button><button type="button" id="print">${t("print")}</button><button type="button" id="link">${t("copyLink")}</button></div>
       </div>
     </section>
     <section class="card"><h2>${t("placement")}</h2><p class="small">${t("howTo", { w: W, h: H })}</p>
