@@ -181,17 +181,55 @@ function mapCanvas(pxPerInch: number, L: Layers = layers): Promise<HTMLCanvasEle
 /** The current map as a PNG (40 px per inch). */
 const pngBlob = (): Promise<Blob> => mapCanvas(40).then((c) => new Promise((res, rej) => c.toBlob((b) => (b ? res(b) : rej(new Error("png"))), "image/png")));
 
-async function exportPdf(btn: HTMLButtonElement) {
+async function makePdf(): Promise<Blob> {
+  const c = await mapCanvas(60);
+  const { buildPdf } = await import("./pdf");
+  return buildPdf(result, { url: c.toDataURL("image/jpeg", 0.92), w: c.width, h: c.height });
+}
+/** Run a slow export with the button showing that it is busy. */
+async function busy(btn: HTMLButtonElement, label: string, work: () => Promise<void>) {
   btn.disabled = true; btn.textContent = t("pdfBusy");
-  try {
-    const c = await mapCanvas(60);
-    const { buildPdf } = await import("./pdf");
-    download(fileBase() + ".pdf", await buildPdf(result, { url: c.toDataURL("image/jpeg", 0.92), w: c.width, h: c.height }));
-  } catch (err) {
-    console.error(err); toast(t("pdfFailed"));
-  } finally {
-    btn.disabled = false; btn.textContent = t("exportPdf");
-  }
+  try { await work(); } catch (err) { console.error(err); toast(t("pdfFailed")); }
+  finally { btn.disabled = false; btn.textContent = label; }
+}
+const exportPdf = (btn: HTMLButtonElement) => busy(btn, t("exportPdf"), async () => download(fileBase() + ".pdf", await makePdf()));
+
+// iPhone and iPad: window.print() does nothing in home-screen web apps and in in-app browsers (Mail, WhatsApp, Discord …),
+// and Safari prints the interactive page badly. There, Print makes the PDF and opens the share sheet, which has Print.
+const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+if (isIOS) setTimeout(() => import("./pdf").catch(() => {}), 1500); // warm up, so the share sheet opens within the tap's time window
+
+/** Share the PDF; true when the share sheet opened (or the viewer closed it). */
+async function sharePdf(file: File): Promise<boolean> {
+  if (!navigator.canShare?.({ files: [file] })) return false;
+  try { await navigator.share({ files: [file], title: file.name }); }
+  catch (err) { if ((err as DOMException).name !== "AbortError") throw err; }
+  return true;
+}
+/** A toast with a button, for when the tap that started the work has expired. */
+function actionToast(msg: string, label: string, action: () => void) {
+  document.querySelector(".toast.action")?.remove();
+  const d = document.createElement("div"); d.className = "toast action"; d.setAttribute("role", "status");
+  const span = document.createElement("span"); span.textContent = msg;
+  const b = document.createElement("button"); b.type = "button"; b.textContent = label;
+  b.addEventListener("click", () => { d.remove(); action(); });
+  d.append(span, b); document.body.appendChild(d); setTimeout(() => d.remove(), 15000);
+}
+function printIOS(btn: HTMLButtonElement) {
+  return busy(btn, t("print"), async () => {
+    const file = new File([await makePdf()], fileBase() + ".pdf", { type: "application/pdf" });
+    try {
+      if (await sharePdf(file)) return;
+    } catch (err) {
+      // the tap's activation ran out while the PDF was being made: ask for one more tap
+      if ((err as DOMException).name === "NotAllowedError") {
+        actionToast(t("pdfReady"), t("print"), () => sharePdf(file).catch(() => download(file.name, file)));
+        return;
+      }
+      throw err;
+    }
+    download(file.name, file); // no share sheet: Safari opens the PDF, which can be printed from there
+  });
 }
 const fileBase = () => `battle-march-${result.map.id}-${result.settings.seed}`;
 
@@ -227,7 +265,7 @@ app.addEventListener("click", async (e) => {
       toast(t("copyFailed"));
     }
   }
-  if (id === "print") window.print();
+  if (id === "print") { if (isIOS) printIOS(document.getElementById("print") as HTMLButtonElement); else window.print(); }
   if (id === "link") {
     try { await navigator.clipboard.writeText(location.href); toast(t("copied")); }
     catch { prompt("", location.href); }

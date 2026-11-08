@@ -13,7 +13,7 @@ const EN = {
   lCentre: "Distance to centre", lZones: "Zones", lNames: "Names",
   checks: "Rule checks", placement: "How to place it", scoring: "Why this map",
   allOk: "All {n} checks passed", someBad: "{n} checks failed",
-  exportSvg: "Download SVG", exportPng: "Download PNG", exportPdf: "Download PDF", pdfBusy: "Building PDF…", pdfFailed: "The PDF could not be made – try again",
+  exportSvg: "Download SVG", exportPng: "Download PNG", exportPdf: "Download PDF", pdfBusy: "Building PDF…", pdfFailed: "The PDF could not be made – try again", pdfReady: "Your PDF is ready",
   pdfQr: "Open this map online", pdfQrNote: "Scan for the same map with the same settings, ready to re-roll or print again.", pdfFooter: "Battle March Map Generator – open this map online", print: "Print", copyLink: "Copy link", copied: "Link copied", copyImage: "Copy map image", imgCopied: "Map copied – paste it anywhere", copyFailed: "This browser can't copy images – use Download PNG",
   sideA: "Side A", sideB: "Side B", centreRing: "No terrain within 12″ of the centre", objRing: "Keep 3″ clear around objectives", distLegend: "Distances in inches",
   rolled: "rolled {r}", mirroredNote: "mirrored", derived: "36×48″ geometry extrapolated from the 30×44″ map",

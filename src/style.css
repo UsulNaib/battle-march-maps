@@ -79,6 +79,8 @@ th { font-size: .78rem; text-transform: uppercase; letter-spacing: .06em; color:
 .rulegrid > div { min-width: 0; }
 footer { margin-top: 28px; color: var(--muted); font-size: .82rem; }
 .toast { position: fixed; left: 50%; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--ink); color: var(--bg); padding: 8px 14px; border-radius: 8px; font-weight: 600; }
+.toast.action { display: flex; align-items: center; gap: 12px; padding: 6px 6px 6px 14px; }
+.toast.action button { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
 @media print {
   body { background: #fff; color: #000; }
   .controls, .toolbar, header .btns, footer, .scorecard, .checkcard { display: none !important; }
