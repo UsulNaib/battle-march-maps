@@ -18,6 +18,9 @@ A placement table tells you where to put each piece on your table, and every rul
 
 The same seed and settings always give the same map; the link in the address bar contains both.
 
+**Download PDF** makes a printable handout: the map on page 1 with a QR code that opens the same map online,
+then the placement table, the rules for this map (links stay clickable) and the rule checks.
+
 ## Rules checked
 
 | Rule | Value |

@@ -4,11 +4,11 @@ import { BOARDS, DEPLOY_MAPS, AREA_KINDS, OBSTACLE_KINDS, Kind, SizeMode, defaul
 import { centroid } from "./geom";
 import { t } from "./i18n";
 import { rulesSummaryHtml } from "./summary";
+import { where, turn } from "./format";
 import { randomSeed } from "./rng";
 
 const app = document.getElementById("app")!;
 const esc = (s: string) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]!));
-const f1 = (x: number) => (Math.round(x * 10) / 10).toFixed(1).replace(/\.0$/, "");
 
 // ---------- state <-> URL ----------
 const LAYERS_DEFAULT: Layers = { grid: true, dist: true, gaps: true, centre: false, zones: true, names: true };
@@ -89,19 +89,6 @@ function controlsHtml(s: Settings): string {
   </form>`;
 }
 
-function edgeName(left: boolean, horizontal: boolean) {
-  return horizontal ? t(left ? "left" : "right") : t(left ? "top" : "bottom");
-}
-function where(x: number, y: number, W: number, H: number) {
-  const l = x <= W - x, tp = y <= H - y;
-  return `${t("fromEdge", { v: f1(l ? x : W - x), edge: edgeName(l, true) })} · ${t("fromEdge", { v: f1(tp ? y : H - y), edge: edgeName(tp, false) })}`;
-}
-function turn(rot: number) {
-  const r = rot > 90 ? rot - 180 : rot;
-  if (Math.abs(r) < 0.5) return t("notTurned");
-  return `${Math.abs(Math.round(r))}° ${r > 0 ? t("clockwise") : t("ccw")}`;
-}
-
 function resultHtml(r: MapResult): string {
   const W = r.board.w, H = r.board.h;
   const bad = r.checks.filter((c) => !c.ok);
@@ -122,7 +109,7 @@ function resultHtml(r: MapResult): string {
       <div class="toolbar">
         <div class="chips" role="group" aria-label="${esc(t("layers"))}">${(["grid", "zones", "dist", "gaps", "centre", "names"] as const).map((k) =>
           `<label class="chip"><input type="checkbox" data-layer="${k}" ${layers[k] ? "checked" : ""}>${t("l" + k[0].toUpperCase() + k.slice(1))}</label>`).join("")}</div>
-        <div class="btns"><button type="button" id="reroll">${t("newSeed")}</button><button type="button" id="copyimg" class="primary">${t("copyImage")}</button><button type="button" id="dlsvg">${t("exportSvg")}</button><button type="button" id="dlpng">${t("exportPng")}</button><button type="button" id="print">${t("print")}</button><button type="button" id="link">${t("copyLink")}</button></div>
+        <div class="btns"><button type="button" id="reroll">${t("newSeed")}</button><button type="button" id="copyimg" class="primary">${t("copyImage")}</button><button type="button" id="dlsvg">${t("exportSvg")}</button><button type="button" id="dlpng">${t("exportPng")}</button><button type="button" id="dlpdf">${t("exportPdf")}</button><button type="button" id="print">${t("print")}</button><button type="button" id="link">${t("copyLink")}</button></div>
       </div>
     </section>
     <section class="card"><h2>${t("placement")}</h2><p class="small">${t("howTo", { w: W, h: H })}</p>
@@ -172,22 +159,39 @@ function toast(msg: string) {
   const d = document.createElement("div"); d.className = "toast"; d.textContent = msg; d.setAttribute("role", "status");
   document.body.appendChild(d); setTimeout(() => d.remove(), 1800);
 }
-/** The current map as a PNG (40 px per inch). */
-function pngBlob(): Promise<Blob> {
+/** The current map drawn on a canvas at the given resolution. */
+function mapCanvas(pxPerInch: number, L: Layers = layers): Promise<HTMLCanvasElement> {
   return new Promise((resolve, reject) => {
     const img = new Image();
-    const url = URL.createObjectURL(new Blob([renderSvg(result, layers)], { type: "image/svg+xml" }));
+    const url = URL.createObjectURL(new Blob([renderSvg(result, L)], { type: "image/svg+xml" }));
     img.onload = () => {
-      const pxPerInch = 40, size = svgSize(result);
+      const size = svgSize(result);
       const c = document.createElement("canvas");
       c.width = Math.round(size.w * pxPerInch); c.height = Math.round(size.h * pxPerInch);
-      c.getContext("2d")!.drawImage(img, 0, 0, c.width, c.height);
+      const ctx = c.getContext("2d")!;
+      ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, c.width, c.height);
+      ctx.drawImage(img, 0, 0, c.width, c.height);
       URL.revokeObjectURL(url);
-      c.toBlob((b) => (b ? resolve(b) : reject(new Error("png"))), "image/png");
+      resolve(c);
     };
-    img.onerror = () => reject(new Error("svg"));
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error("svg")); };
     img.src = url;
   });
+}
+/** The current map as a PNG (40 px per inch). */
+const pngBlob = (): Promise<Blob> => mapCanvas(40).then((c) => new Promise((res, rej) => c.toBlob((b) => (b ? res(b) : rej(new Error("png"))), "image/png")));
+
+async function exportPdf(btn: HTMLButtonElement) {
+  btn.disabled = true; btn.textContent = t("pdfBusy");
+  try {
+    const c = await mapCanvas(60);
+    const { buildPdf } = await import("./pdf");
+    download(fileBase() + ".pdf", await buildPdf(result, { url: c.toDataURL("image/jpeg", 0.92), w: c.width, h: c.height }));
+  } catch (err) {
+    console.error(err); toast(t("pdfFailed"));
+  } finally {
+    btn.disabled = false; btn.textContent = t("exportPdf");
+  }
 }
 const fileBase = () => `battle-march-${result.map.id}-${result.settings.seed}`;
 
@@ -211,6 +215,7 @@ app.addEventListener("click", async (e) => {
   if (!id) return;
   if (id === "newseed" || id === "reroll") { settings = readForm(); run(true); }
   if (id === "dlsvg") download(fileBase() + ".svg", new Blob([renderSvg(result, layers)], { type: "image/svg+xml" }));
+  if (id === "dlpdf") exportPdf(document.getElementById("dlpdf") as HTMLButtonElement);
   if (id === "dlpng") pngBlob().then((b) => download(fileBase() + ".png", b)).catch(() => toast(t("copyFailed")));
   if (id === "copyimg") {
     try {
