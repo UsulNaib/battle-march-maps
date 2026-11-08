@@ -109,7 +109,7 @@ function resultHtml(r: MapResult): string {
       <div class="toolbar">
         <div class="chips" role="group" aria-label="${esc(t("layers"))}">${(["grid", "zones", "dist", "gaps", "centre", "names"] as const).map((k) =>
           `<label class="chip"><input type="checkbox" data-layer="${k}" ${layers[k] ? "checked" : ""}>${t("l" + k[0].toUpperCase() + k.slice(1))}</label>`).join("")}</div>
-        <div class="btns"><button type="button" id="reroll">${t("newSeed")}</button><button type="button" id="copyimg" class="primary">${t("copyImage")}</button><button type="button" id="dlsvg">${t("exportSvg")}</button><button type="button" id="dlpng">${t("exportPng")}</button><button type="button" id="dlpdf">${t("exportPdf")}</button><button type="button" id="print">${t("print")}</button><button type="button" id="link">${t("copyLink")}</button></div>
+        <div class="btns"><button type="button" id="reroll">${t("newSeed")}</button><button type="button" id="fullscreen">${t("fullscreen")}</button><button type="button" id="copyimg" class="primary">${t("copyImage")}</button><button type="button" id="dlsvg">${t("exportSvg")}</button><button type="button" id="dlpng">${t("exportPng")}</button><button type="button" id="dlpdf">${t("exportPdf")}</button><button type="button" id="print">${t("print")}</button><button type="button" id="link">${t("copyLink")}</button></div>
       </div>
     </section>
     <section class="card"><h2>${t("placement")}</h2><p class="small">${t("howTo", { w: W, h: H })}</p>
@@ -231,6 +231,47 @@ function printIOS(btn: HTMLButtonElement) {
     download(file.name, file); // no share sheet: Safari opens the PDF, which can be printed from there
   });
 }
+// ---------- full screen ----------
+// The map fills the screen and turns sideways when the screen is upright, so a landscape map uses all of it.
+// Real full screen where the browser allows it (not for page elements on iPhone); otherwise a fixed overlay does the same job.
+type FsDoc = Document & { webkitFullscreenElement?: Element; webkitExitFullscreen?: () => void };
+type FsEl = HTMLElement & { webkitRequestFullscreen?: () => void };
+let fsView: HTMLElement | null = null;
+const fsElement = () => document.fullscreenElement || (document as FsDoc).webkitFullscreenElement || null;
+
+function openFullscreen() {
+  if (fsView) return;
+  const v = document.createElement("div") as FsEl;
+  v.className = "fsview"; v.setAttribute("role", "dialog"); v.setAttribute("aria-modal", "true"); v.setAttribute("aria-label", t("m_" + result.map.id));
+  v.innerHTML = `<div class="fsmap">${renderSvg(result, layers)}</div><button type="button" class="fsclose" aria-label="${esc(t("closeFullscreen"))}">✕</button>`;
+  document.body.appendChild(v);
+  document.documentElement.classList.add("fs-open");
+  fsView = v;
+  v.querySelector<HTMLButtonElement>(".fsclose")!.focus();
+  try {
+    const req = v.requestFullscreen?.bind(v) || v.webkitRequestFullscreen?.bind(v);
+    const p = req?.({ navigationUI: "hide" } as never) as Promise<void> | undefined;
+    p?.catch(() => { /* not allowed here: the overlay alone is fine */ });
+  } catch { /* overlay only */ }
+}
+function closeFullscreen() {
+  if (!fsView) return;
+  const v = fsView; fsView = null;
+  if (fsElement()) {
+    const d = document as FsDoc;
+    try { (document.exitFullscreen?.() || d.webkitExitFullscreen?.()); } catch { /* ignore */ }
+  }
+  v.remove();
+  document.documentElement.classList.remove("fs-open");
+  (document.getElementById("fullscreen") as HTMLButtonElement | null)?.focus();
+}
+// Leaving real full screen (Esc, swipe, system gesture) closes the view too.
+const onFsChange = () => { if (fsView && !fsElement()) closeFullscreen(); };
+document.addEventListener("fullscreenchange", onFsChange);
+document.addEventListener("webkitfullscreenchange", onFsChange);
+document.addEventListener("keydown", (e) => { if (e.key === "Escape" && fsView) closeFullscreen(); });
+document.addEventListener("click", (e) => { if ((e.target as HTMLElement).closest(".fsclose")) closeFullscreen(); });
+
 const fileBase = () => `battle-march-${result.map.id}-${result.settings.seed}`;
 
 app.addEventListener("change", (e) => {
@@ -265,6 +306,7 @@ app.addEventListener("click", async (e) => {
       toast(t("copyFailed"));
     }
   }
+  if (id === "fullscreen") openFullscreen();
   if (id === "print") { if (isIOS) printIOS(document.getElementById("print") as HTMLButtonElement); else window.print(); }
   if (id === "link") {
     try { await navigator.clipboard.writeText(location.href); toast(t("copied")); }

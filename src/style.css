@@ -81,9 +81,21 @@ footer { margin-top: 28px; color: var(--muted); font-size: .82rem; }
 .toast { position: fixed; left: 50%; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--ink); color: var(--bg); padding: 8px 14px; border-radius: 8px; font-weight: 600; }
 .toast.action { display: flex; align-items: center; gap: 12px; padding: 6px 6px 6px 14px; }
 .toast.action button { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+/* full-screen map: fills the screen, turned sideways when the screen is upright */
+.fs-open, .fs-open body { overflow: hidden; }
+.fsview { position: fixed; inset: 0; z-index: 100; background: #f6f0e1; overflow: hidden; touch-action: pinch-zoom; }
+.fsmap { position: absolute; left: 50%; top: 50%; width: 100vw; height: 100vh; width: 100dvw; height: 100dvh; transform: translate(-50%, -50%);
+  padding: max(8px, env(safe-area-inset-top, 0px)) max(8px, env(safe-area-inset-right, 0px)) max(8px, env(safe-area-inset-bottom, 0px)) max(8px, env(safe-area-inset-left, 0px)); box-sizing: border-box; }
+.fsmap svg { display: block; width: 100%; height: 100%; }
+@media (orientation: portrait) {
+  .fsmap { width: 100vh; height: 100vw; width: 100dvh; height: 100dvw; transform: translate(-50%, -50%) rotate(90deg);
+    padding: max(8px, env(safe-area-inset-left, 0px)) max(8px, env(safe-area-inset-top, 0px)) max(8px, env(safe-area-inset-right, 0px)) max(8px, env(safe-area-inset-bottom, 0px)); }
+}
+.fsclose { position: absolute; top: max(10px, env(safe-area-inset-top, 0px)); right: max(10px, env(safe-area-inset-right, 0px)); width: 44px; height: 44px; padding: 0;
+  border-radius: 50%; font-size: 18px; line-height: 1; background: rgba(43, 36, 24, .82); border-color: transparent; color: #fff; }
 @media print {
   body { background: #fff; color: #000; }
-  .controls, .toolbar, header .btns, footer, .scorecard, .checkcard { display: none !important; }
+  .controls, .toolbar, header .btns, footer, .scorecard, .checkcard, .fsview { display: none !important; }
   .rules a { color: inherit; text-decoration: none; }
   .layout { grid-template-columns: 1fr; }
   .card { box-shadow: none; border: none; padding: 0; }
