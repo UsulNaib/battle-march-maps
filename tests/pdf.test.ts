@@ -15,3 +15,21 @@ describe("pdf export", () => {
     expect(pdfText("8×6″ · #1 ↔ #2 → 3° −2")).toBe('8×6" · #1 <-> #2 -> 3° -2');
   });
 });
+
+import { victoryPointItems, rulesSummaryHtml } from "../src/summary";
+import { generate, DEFAULT_SETTINGS } from "../src/generate";
+
+describe("battle march victory points", () => {
+  const map = (objectives: "troves2" | "troves3" | "landmark" | "none") => generate({ ...DEFAULT_SETTINGS, seed: "vp", objectives, candidates: 10 });
+  it("scores the objectives that are on this map", () => {
+    expect(victoryPointItems(map("troves2"))[0]).toContain("up to 20 VP per turn");
+    expect(victoryPointItems(map("troves3"))[0]).toContain("up to 30 VP per turn");
+    expect(victoryPointItems(map("landmark"))[0]).toContain("scores 25 VP");
+    expect(victoryPointItems(map("none"))[0]).toContain("no objectives");
+  });
+  it("lists general, standards and battle standard bearer on every map", () => {
+    const html = rulesSummaryHtml(map("none"));
+    expect(html).toContain("Victory points (Battle March)");
+    for (const v of ["General", "50 VP", "standard taken as a trophy: 25 VP", "Battle Standard Bearer"]) expect(html).toContain(v);
+  });
+});

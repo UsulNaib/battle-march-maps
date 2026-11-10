@@ -80,6 +80,25 @@ function kindRules(k: Kind, R: MapResult["terrainRules"]): Block {
 /** Short tag shown next to a terrain name, e.g. "dangerous". */
 export const terrainTag = (k: Kind, R: MapResult["terrainRules"]) => kindRules(k, R).tag;
 
+/** Battle March victory points (General's Companion p. 27), with the objective line worked out for this map. */
+export const BM_VP = { general: 50, standard: 25, bsb: 25, trove: 10, landmark: 25 };
+export function victoryPointItems(r: Pick<MapResult, "objectives">): string[] {
+  const troves = r.objectives.filter((o) => o.kind === "trove").length;
+  const landmark = r.objectives.some((o) => o.kind === "landmark");
+  const obj = troves
+    ? `<strong>This map, ${troves} treasure troves:</strong> at the end of every player turn – yours and your opponent's – each player scores ${BM_VP.trove} VP for every trove they control, so up to ${troves * BM_VP.trove} VP per turn.`
+    : landmark
+      ? `<strong>This map, strategic landmark:</strong> at the end of every player turn – yours and your opponent's – the player who controls it scores ${BM_VP.landmark} VP.`
+      : `<strong>This map has no objectives:</strong> only the points for the enemy army count.`;
+  return [
+    obj,
+    `Enemy General slain, fled off the table or fleeing when the game ends: ${BM_VP.general} VP.`,
+    `Each enemy standard taken as a trophy: ${BM_VP.standard} VP. Enemy Battle Standard Bearer slain, fled or fleeing at the end: ${BM_VP.bsb} VP more.`,
+    "Enemy units destroyed, fled or badly weakened score as in the core rules.",
+    "The player with the most victory points wins.",
+  ];
+}
+
 export function rulesSummaryHtml(r: MapResult): string {
   const kinds = new Set(r.features.map((f) => f.kind));
   // natural features a unit can actually enter (an impassable wood never triggers the wilderness table)
@@ -114,17 +133,18 @@ export function rulesSummaryHtml(r: MapResult): string {
       <li>The first time a unit is deployed in, or ends its move in, a natural feature (${natural.map((k) => t("k_" + k).toLowerCase()).join(", ")} on this map), roll a D6 to find out what it is: briar patch, defensive position, toxic spores, lingering magic, healing herbs or a troll's lair.</li>
       <li>${link("/battle-march/wilderness-terrain", "Wilderness terrain table")}</li></ul>`);
 
+  const control = `<li>Control is checked at the end of every player turn: the closest unit of Unit Strength 5 or more within 3″ holds it. Fleeing units and units that failed a Stupidity test don't count. At equal distance the higher Unit Strength wins; an exact tie leaves it contested.</li>`;
   if (troves)
-    sec.push(`<h3>Treasure troves</h3><ul>
+    sec.push(`<h3>Treasure troves</h3><ul>${control}
       <li>${link("/battle-march/treasure-troves", "Treasure troves")} · ${link("/battle-march/controlling-objectives", "Controlling objectives")}</li></ul>`);
   if (landmark)
     sec.push(`<h3>Strategic landmark</h3><ul>
       <li>Impassable, and no line of sight can be drawn over it.</li>
-      <li>A unit that controls it at the end of either player's turn gains a property until the end of the next turn (D6): 1–2 Magic Resistance (−2), 3–4 Frenzy, 5–6 Stubborn.</li>
+      <li>A unit that controls it at the end of either player's turn gains a property until the end of the next turn (D6): 1–2 Magic Resistance (−2), 3–4 Frenzy, 5–6 Stubborn.</li>${control}
       <li>${link("/battle-march/landmarks", "Landmarks")} · ${link("/battle-march/controlling-objectives", "Controlling objectives")}</li></ul>`);
 
-  sec.push(`<h3>The game</h3><ul>
-    <li>${link("/battle-march/game-length-battle-march", "Game length")} · ${link("/battle-march/victory-points-battle-march", "Victory points")}</li></ul>`);
+  sec.push(`<h3>Victory points (Battle March)</h3><ul>${victoryPointItems(r).map((i) => `<li>${i}</li>`).join("")}
+    <li>${link("/battle-march/victory-points-battle-march", "Victory points")} · ${link("/battle-march/game-length-battle-march", "Game length")}</li></ul>`);
 
   return `<section class="card rules"><h2>Rules for this map</h2>
     <p class="small">Only the rules you still need while playing on this map, including every terrain type on it; set-up rules (zones, terrain placement, objective placement) are already applied above. Links open the online rules index.</p>
