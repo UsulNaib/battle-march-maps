@@ -97,6 +97,16 @@ footer { margin-top: 28px; color: var(--muted); font-size: .82rem; }
 }
 .fsclose { position: absolute; top: max(10px, env(safe-area-inset-top, 0px)); right: max(10px, env(safe-area-inset-right, 0px)); width: 44px; height: 44px; padding: 0;
   border-radius: 50%; font-size: 18px; line-height: 1; background: rgba(43, 36, 24, .82); border-color: transparent; color: #fff; }
+/* 34" ultrawide monitors (3440x1440 and similar, 21:9 or wider): use the full width.
+   Settings | map | details side by side. Narrower or less wide screens keep the normal layout. */
+@media screen and (min-width: 2200px) and (min-aspect-ratio: 21/9) {
+  .wrap { max-width: none; }
+  .layout { grid-template-columns: 320px minmax(0, 1fr); }
+  .main { grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); align-items: start; }
+  .main > .mapcard { grid-column: 1; grid-row: 1 / span 4; position: sticky; top: 16px; }
+  .main > :not(.mapcard) { grid-column: 2; }
+  .svgbox svg { width: auto; max-width: 100%; max-height: calc(100vh - 300px); min-width: 0; margin: 0 auto; }
+}
 @media print {
   body { background: #fff; color: #000; }
   .controls, .toolbar, header .btns, footer, .scorecard, .checkcard, .fsview, .fsbtn { display: none !important; }
