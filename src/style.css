@@ -105,6 +105,10 @@ footer { margin-top: 28px; color: var(--muted); font-size: .82rem; }
   .main { grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); align-items: start; }
   .main > .mapcard { grid-column: 1; grid-row: 1 / span 4; position: sticky; top: 16px; }
   .main > :not(.mapcard) { grid-column: 2; }
+  /* right column: rules for this map first, then how to place it, then checks and score */
+  .main > .rules { order: 1; }
+  .main > .placecard { order: 2; }
+  .main > .cols { order: 3; }
   .svgbox svg { width: auto; max-width: 100%; max-height: calc(100vh - 300px); min-width: 0; margin: 0 auto; }
 }
 @media print {

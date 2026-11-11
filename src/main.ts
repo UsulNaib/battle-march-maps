@@ -113,7 +113,7 @@ function resultHtml(r: MapResult): string {
         <div class="btns"><button type="button" id="reroll">${t("newSeed")}</button><button type="button" id="copyimg" class="primary">${t("copyImage")}</button><button type="button" id="dlsvg">${t("exportSvg")}</button><button type="button" id="dlpng">${t("exportPng")}</button><button type="button" id="dlpdf">${t("exportPdf")}</button><button type="button" id="print">${t("print")}</button><button type="button" id="link">${t("copyLink")}</button></div>
       </div>
     </section>
-    <section class="card"><h2>${t("placement")}</h2><p class="small">${t("howTo", { w: W, h: H })}</p>
+    <section class="card placecard"><h2>${t("placement")}</h2><p class="small">${t("howTo", { w: W, h: H })}</p>
         <div class="tablebox"><table><thead><tr><th>${t("colPiece")}</th><th>${t("colSize")}</th><th>${t("colCentre")}</th><th>${t("colTurn")}</th></tr></thead><tbody>${rows}${orows}</tbody></table></div></section>
     ${rulesSummaryHtml(r)}
     <div class="cols">
